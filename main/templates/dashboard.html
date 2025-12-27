@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Portfolio</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+</head>
+<body class="bg-gray-100">
+    <!-- Header -->
+    <header class="bg-white shadow">
+        <div class="max-w-7xl mx-auto py-6 px-4">
+            <h1 class="text-3xl font-bold text-gray-900">Portfolio Dashboard</h1>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto py-3 px-2">
+        <!-- Portfolio Selector -->
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+                Seleccionar Portfolio:
+            </label>
+            <select id="portfolioSelect" 
+                    class="block w-full md:w-64 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                <option value="">-- Seleccione --</option>
+                {% for portfolio in portfolios %}
+                <option value="{{ portfolio.id }}">{{ portfolio.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Chart 1: Portfolio Value -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold mb-4">Valor del Portfolio</h2>
+                <canvas id="portfolioValueChart"></canvas>
+            </div>
+
+            <!-- Chart 2: Asset Weights -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold mb-4">Distribución de Activos</h2>
+                <canvas id="assetWeightsChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Full Width Chart -->
+        <div class="mt-6 bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-semibold mb-4">Evolución de Activos</h2>
+            <canvas id="assetEvolutionChart"></canvas>
+        </div>
+    </main>
+
+    <script>
+        // Variables globales para los gráficos
+        let portfolioValueChart = null;
+        let assetWeightsChart = null;
+        let assetEvolutionChart = null;
+
+        // Listener para cambio de portfolio
+        document.getElementById('portfolioSelect').addEventListener('change', function() {
+            const portfolioId = this.value;
+            if (portfolioId) {
+                loadPortfolioData(portfolioId);
+            }
+        });
+
+        // Función para cargar datos del portfolio
+        async function loadPortfolioData(portfolioId) {
+            try {
+                // Obtener fechas (últimos 30 días como ejemplo)
+                const endDate = new Date().toISOString().split('T')[0];
+                const startDate = new Date(Date.now() - 30*24*60*60*1000).toISOString().split('T')[0];
+                
+                // Llamar a tu API
+                const response = await fetch(
+                    `/api/metrics/?portfolio_id=${portfolioId}&fecha_inicio=${startDate}&fecha_fin=${endDate}`
+                );
+                const data = await response.json();
+                
+                // Actualizar gráficos
+                updateCharts(data);
+            } catch (error) {
+                console.error('Error cargando datos:', error);
+            }
+        }
+
+        // Función para actualizar los gráficos
+        function updateCharts(data) {
+            const dates = data.metrics.map(m => m.date);
+            const values = data.metrics.map(m => m.portfolio_value);
+            
+            // Gráfico 1: Valor del Portfolio (Línea)
+            if (portfolioValueChart) portfolioValueChart.destroy();
+            const ctx1 = document.getElementById('portfolioValueChart').getContext('2d');
+            portfolioValueChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Valor del Portfolio',
+                        data: values,
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: true }
+                    }
+                }
+            });
+
+            // Gráfico 2: Pesos de Activos (Pie/Doughnut)
+            if (assetWeightsChart) assetWeightsChart.destroy();
+            const latestWeights = data.metrics[data.metrics.length - 1].weights;
+            const ctx2 = document.getElementById('assetWeightsChart').getContext('2d');
+            assetWeightsChart = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(latestWeights),
+                    datasets: [{
+                        data: Object.values(latestWeights),
+                        backgroundColor: [
+                            'rgb(239, 68, 68)',
+                            'rgb(59, 130, 246)',
+                            'rgb(34, 197, 94)',
+                            'rgb(251, 191, 36)',
+                            'rgb(168, 85, 247)',
+                            'rgb(236, 72, 153)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'right' }
+                    }
+                }
+            });
+
+            // Gráfico 3: Evolución de Activos (Líneas múltiples)
+            if (assetEvolutionChart) assetEvolutionChart.destroy();
+            const assets = Object.keys(data.metrics[0].asset_values);
+            const datasets = assets.map((asset, index) => ({
+                label: asset,
+                data: data.metrics.map(m => m.asset_values[asset]),
+                borderColor: `hsl(${index * 60}, 70%, 50%)`,
+                tension: 0.4
+            }));
+            
+            const ctx3 = document.getElementById('assetEvolutionChart').getContext('2d');
+            assetEvolutionChart = new Chart(ctx3, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'top' }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

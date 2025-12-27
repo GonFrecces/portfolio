@@ -1,22 +1,19 @@
-"""
-URL configuration for main project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
-from django.contrib import admin
 from django.urls import path
+from django.contrib import admin
+from main.views import (
+    DashboardView, 
+    PortfolioMetricsAPIView, 
+    PortfolioListAPIView, 
+    PortfolioDetailAPIView
+)
+
+app_name = 'portfolios'
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', DashboardView.as_view(), name='dashboard'),  # Vista principal del dashboard con gráficos
+    path('dashboard/', DashboardView.as_view(), name='dashboard-alt'),  # Alias alternativo
+    path('api/metrics/', PortfolioMetricsAPIView.as_view(), name='portfolio-metrics'), # API de métricas (Pregunta 4 del challenge)
+    path('api/portfolios/', PortfolioListAPIView.as_view(), name='portfolio-list'), # API de listado de portafolios
+    path('api/portfolios/<int:portfolio_id>/', PortfolioDetailAPIView.as_view(), name='portfolio-detail'), # API de detalle de portafolio
 ]
