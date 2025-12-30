@@ -1,7 +1,6 @@
-# portfolios/management/commands/calculate_initial_quantities.py
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from main.models import Portfolio, PortfolioWeight, Holding, Price
+from main.models import Portfolio, Holding, Price
 from decimal import Decimal
 
 
@@ -64,6 +63,7 @@ class Command(BaseCommand):
                 p_i_0 = price_obj.price
                 
                 # Calcular cantidad: c_i,0 = (w_i,0 * V_0) / p_i,0
+                # La cantidad invertida por activo (c_i_0) 
                 c_i_0 = (w_i_0 * V0) / p_i_0
                 
                 # Verificación: x_i,0 = p_i,0 * c_i,0
