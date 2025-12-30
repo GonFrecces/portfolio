@@ -24,7 +24,7 @@ class DashboardView(View):
         context = {
             'portfolios': Portfolio.objects.all()
         }
-        return render(request, 'main/dashboard.html', context)
+        return render(request, 'dashboard.html', context)
 
 
 class PortfolioMetricsAPIView(APIView):

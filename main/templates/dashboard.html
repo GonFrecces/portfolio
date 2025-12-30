@@ -20,9 +20,9 @@
     </header>
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto py-3 px-2">
+    <main class="max-w-7xl mx-auto py-6 px-4">
         <!-- Portfolio Selector -->
-        <div class="mb-4">
+        <div class="mb-6">
             <label class="block text-sm font-medium text-gray-700 mb-2">
                 Seleccionar Portfolio:
             </label>
@@ -74,9 +74,9 @@
         // Función para cargar datos del portfolio
         async function loadPortfolioData(portfolioId) {
             try {
-                // Obtener fechas (últimos 30 días como ejemplo)
-                const endDate = new Date().toISOString().split('T')[0];
-                const startDate = new Date(Date.now() - 30*24*60*60*1000).toISOString().split('T')[0];
+                // Usar rango de fechas donde hay datos (2022-02-15 a 2023-02-16)
+                const startDate = '2022-02-15';
+                const endDate = '2023-02-16';
                 
                 // Llamar a tu API
                 const response = await fetch(
@@ -93,6 +93,13 @@
 
         // Función para actualizar los gráficos
         function updateCharts(data) {
+            // Validar que haya datos
+            if (!data.metrics || data.metrics.length === 0) {
+                console.error('No hay datos disponibles para mostrar');
+                alert('No hay datos disponibles para el portfolio seleccionado en el rango de fechas especificado.');
+                return;
+            }
+
             const dates = data.metrics.map(m => m.date);
             const values = data.metrics.map(m => m.portfolio_value);
             
