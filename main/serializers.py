@@ -1,4 +1,3 @@
-# portfolios/serializers.py
 from rest_framework import serializers
 from main.models import Portfolio, Asset, PortfolioWeight
 

@@ -1,8 +1,6 @@
-# portfolios/services.py
 from typing import List, Dict
 from decimal import Decimal
 from datetime import date
-from django.db.models import F, Q
 from main.models import Portfolio, Holding, Price
 
 
